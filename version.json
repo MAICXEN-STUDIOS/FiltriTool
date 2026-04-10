@@ -1,5 +1,6 @@
 {
   "latest_version": "1.0.0",
   "release_notes": "Prima versione ufficiale del software.",
-  "download_url": "https://github.com/MAICXEN-STUDIOS/FiltriTool/releases/download/v1.1.0/FiltriTool.zip"
+  "download_url_win": "LINK_AL_TUO_SETUP.exe",
+  "download_url_mac": "https://github.com/MAICXEN-STUDIOS/FiltriTool/releases/download/v1.1.0/FiltriTool.zip"
 }
