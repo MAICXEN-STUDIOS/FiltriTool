@@ -10,35 +10,39 @@ from PySide6.QtCore import QThread, Signal, Qt
 from PySide6.QtWidgets import (QDialog, QVBoxLayout, QHBoxLayout, 
                                QLabel, QPushButton, QTextEdit, QProgressBar, QApplication)
 
-# Sostituisci con il link raw del tuo version.json su GitHub
-UPDATE_URL = "https://raw.githubusercontent.com/MAICXEN-STUDIOS/FiltriTool/refs/heads/main/version.json"
-CURRENT_VERSION = "1.1.0"
+# L'UNICO PUNTO IN CUI DOVRAI AGGIORNARE LA VERSIONE D'ORA IN POI:
+CURRENT_VERSION = "1.3.0"
+
+# L'API di GitHub che legge in automatico la tua pagina "Releases"
+API_URL = "https://api.github.com/repos/MAICXEN-STUDIOS/FiltriTool/releases/latest"
 
 class UpdateCheckerThread(QThread):
-    """Interroga il server per trovare nuove versioni."""
+    """Interroga direttamente GitHub API per trovare nuove versioni."""
     update_available = Signal(str, str, str)  # version, notes, download_url
 
     def run(self):
         try:
-            response = requests.get(UPDATE_URL, timeout=5)
+            response = requests.get(API_URL, timeout=5)
             response.raise_for_status()
             data = response.json()
             
-            latest_version = data.get("latest_version", "0.0.0")
-            release_notes = data.get("release_notes", "")
+            # GitHub restituisce il tag (es. "v1.3.0"). Lrstrip("v") toglie la 'v' per fare il calcolo matematico.
+            latest_tag = data.get("tag_name", "v0.0.0").lstrip("v")
             
-            # Seleziona il link in base al sistema operativo
+            # Prende le note scritte direttamente da te sulla pagina GitHub!
+            release_notes = data.get("body", "Aggiornamento disponibile.")
+            
+            # I link statici definitivi
             if platform.system() == "Windows":
-                download_url = data.get("download_url_win", "")
+                download_url = "https://github.com/MAICXEN-STUDIOS/FiltriTool/releases/latest/download/FiltriTool_Win.zip"
             else:
-                download_url = data.get("download_url_mac", "")
+                download_url = "https://github.com/MAICXEN-STUDIOS/FiltriTool/releases/latest/download/FiltriTool_Mac.zip"
 
-            if version.parse(latest_version) > version.parse(CURRENT_VERSION) and download_url:
-                self.update_available.emit(latest_version, release_notes, download_url)
+            if version.parse(latest_tag) > version.parse(CURRENT_VERSION):
+                self.update_available.emit(latest_tag, release_notes, download_url)
                 
         except Exception:
             pass
-
 
 class DownloadThread(QThread):
     """Scarica il file in background riportando la percentuale."""
