@@ -157,48 +157,57 @@ class UpdateDialog(QDialog):
             return
 
         if platform.system() == "Windows":
-            # WINDOWS: Lancia il setup.exe scaricato
-            # Aggiungendo "/SILENT" installa senza chiedere conferme (se supportato da Inno Setup)
-            os.startfile(file_path)
-            QApplication.quit()
+            # Trova l'eseguibile attuale e la sua cartella
+            current_exe = sys.executable
+            current_dir = os.path.dirname(current_exe)
             
+            temp_dir = tempfile.mkdtemp()
+            # Su Windows usiamo la libreria zipfile nativa (non ha i problemi dei symlink del Mac)
+            with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+                
+            # Cerca la cartella appena estratta (che contiene il nuovo eseguibile)
+            extracted_folder = temp_dir
+            for item in os.listdir(temp_dir):
+                item_path = os.path.join(temp_dir, item)
+                # MODIFICA QUESTA RIGA: Cambia "Electronics" in "FiltriTool"
+                if os.path.isdir(item_path) and "FiltriTool" in item:
+                    extracted_folder = item_path
+                    break
+
+            # Crea lo script BAT fantasma per Windows
+            script_path = os.path.join(temp_dir, "update_win.bat")
+            with open(script_path, "w") as f:
+                f.write(f"""@echo off
+                    timeout /t 2 /nobreak > NUL
+                    xcopy "{extracted_folder}\*" "{current_dir}\" /s /e /y
+                    start "" "{current_exe}"
+                    del "%~f0"
+                    """)
+            # Esegue il file BAT e chiude l'app
+            subprocess.Popen([script_path], creationflags=subprocess.CREATE_NEW_CONSOLE)
+            QApplication.quit()
+
         elif platform.system() == "Darwin": # MAC
-            # Trova il percorso dell'app attualmente in esecuzione
+            # [Il codice per il Mac che avevamo già scritto con unzip -q rimane esattamente qui]
             current_exe = sys.executable
             current_app = current_exe[:current_exe.find('.app') + 4]
             
             temp_dir = tempfile.mkdtemp()
             script_path = os.path.join(temp_dir, "update_mac.sh")
             
-            # Crea lo script bash fantasma
             with open(script_path, "w") as f:
                 f.write(f"""#!/bin/bash
-                # 1. Aspetta 2 secondi per far chiudere l'app vecchia
-                sleep 2
-
-                # 2. FIX PYTHON: Usa l'utility 'unzip' nativa del Mac per estrarre l'archivio.
-                # Questo è FONDAMENTALE perché preserva i symlink (che zipfile di Python rompeva).
-                unzip -q "{file_path}" -d "{temp_dir}"
-
-                # 3. Trova l'app appena estratta (il cui nome finisce per .app)
-                EXTRACTED_APP=$(find "{temp_dir}" -name "*.app" -maxdepth 1 | head -n 1)
-
-                if [ -n "$EXTRACTED_APP" ]; then
-                    # 4. Cancella la vecchia app
-                    rm -rf "{current_app}"
-                    
-                    # 5. Sposta la nuova app al suo posto
-                    mv "$EXTRACTED_APP" "{current_app}"
-                    
-                    # 6. FIX APPLE: Rimuove la quarantena di macOS (ignora gli errori se non c'è)
-                    xattr -cr "{current_app}" 2>/dev/null
-                    
-                    # 7. Riapri l'app aggiornata
-                    open "{current_app}"
-                fi
-                """)
-            
-            # Rende lo script eseguibile e lo lancia in modo indipendente
+                    sleep 2
+                    unzip -q "{file_path}" -d "{temp_dir}"
+                    EXTRACTED_APP=$(find "{temp_dir}" -name "*.app" -maxdepth 1 | head -n 1)
+                    if [ -n "$EXTRACTED_APP" ]; then
+                        rm -rf "{current_app}"
+                        mv "$EXTRACTED_APP" "{current_app}"
+                        xattr -cr "{current_app}" 2>/dev/null
+                        open "{current_app}"
+                    fi
+                    """)
             os.chmod(script_path, 0o755)
             subprocess.Popen(['sh', script_path], start_new_session=True)
             QApplication.quit()

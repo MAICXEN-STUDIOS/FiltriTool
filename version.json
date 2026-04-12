@@ -1,6 +1,6 @@
 {
-  "latest_version": "1.1.0",
-  "release_notes": "Nuova icona",
-  "download_url_win": "",
-  "download_url_mac": "https://github.com/MAICXEN-STUDIOS/FiltriTool/releases/download/version/FiltriTool.zip"
+  "latest_version": "1.2.0",
+  "release_notes": "Rebrand ufficiale in FiltriTool! Aggiunte nuove icone di sistema.",
+  "download_url_win": "https://github.com/MAICXEN-STUDIOS/FiltriTool/releases/latest/download/FiltriTool_Win.zip",
+  "download_url_mac": "https://github.com/MAICXEN-STUDIOS/FiltriTool/releases/latest/download/FiltriTool_Mac.zip"
 }

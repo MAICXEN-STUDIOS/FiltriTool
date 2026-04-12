@@ -3,7 +3,7 @@ name: Build Release Windows e Mac
 on:
   push:
     tags:
-      - 'v*' # Si attiva solo quando crei un tag versione (es. v1.1.0)
+      - 'v*'
 
 jobs:
   # ==========================================
@@ -26,13 +26,19 @@ jobs:
         pip install -r requirements.txt
 
     - name: Compilazione con PyInstaller (Windows)
+      # Aggiunto il nuovo nome e l'icona .ico
       run: |
-        pyinstaller --windowed --name "FiltriTool" --icon="icona.icns" --hidden-import=requests --hidden-import=packaging main.py
+        pyinstaller --windowed --name "FiltriTool" --icon="icona.ico" --hidden-import=requests --hidden-import=packaging main.py
 
-    - name: Caricamento .exe nella Release
+    - name: Creazione archivio .zip
+      # Modificata la cartella e il nome del file finale
+      run: |
+        Compress-Archive -Path dist\FiltriTool -DestinationPath dist\FiltriTool_Win.zip
+
+    - name: Caricamento .zip nella Release
       uses: softprops/action-gh-release@v1
       with:
-        files: dist/FiltriTool.exe
+        files: dist/FiltriTool_Win.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -56,19 +62,19 @@ jobs:
         pip install -r requirements.txt
 
     - name: Compilazione con PyInstaller (Mac)
-      # Nota: se in futuro aggiungi l'icona nel repository, puoi aggiungere --icon=icona.icns qui
+      # Aggiunto il nuovo nome e l'icona .icns
       run: |
         pyinstaller --windowed --name "FiltriTool" --icon="icona.icns" --hidden-import=requests --hidden-import=packaging main.py
 
     - name: Creazione archivio .zip per Auto-Updater
-      # Entriamo nella cartella dist e zippiamo la .app esattamente come faresti col tasto destro
+      # Modificato per zippare la nuova .app
       run: |
         cd dist
-        zip -r FiltriTool_mac.zip "FiltriTool.app"
+        zip -r FiltriTool_Mac.zip "FiltriTool.app"
 
     - name: Caricamento .zip nella Release
       uses: softprops/action-gh-release@v1
       with:
-        files: dist/FiltriTool_mac.zip
+        files: dist/FiltriTool_Mac.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
