@@ -1,0 +1,8 @@
+PySide6
+scipy
+numpy
+matplotlib
+schemdraw
+requests
+packaging
+pyinstaller
